@@ -56,46 +56,37 @@ function postHandler (req, res) {
   let description;
 
   req.on('data', function (data) {
-    // let request = data.toString();
-    // console.log(request)
     let parseRequest = querystring.parse(data.toString());
     console.log(parseRequest);
-
-
-
     name = parseRequest.elementName;
-    console.log('element name: ' + name)
     symbol = parseRequest.elementSymbol;
     atomicNumber = parseRequest.elementAtmoicNumber;
     description = parseRequest.elementDescription;
 
+    let elementIndex =   `<!DOCTYPE html>
+    <html lang="en">
+    <head>
+      <meta charset="UTF-8">
+      <title>The Elements - ${name}</title>
+      <link rel="stylesheet" href="/css/styles.css">
+    </head>
+    <body>
+      <h1>${name}</h1>
+      <h2>${symbol}</h2>
+      <h3>${atomicNumber}</h3>
+      <p>${description}</p>
+      <p><a href="/">back</a></p>
+    </body>
+    </html>`
 
-    fs.writeFile('./public/' + name + '.html', 'TESTBODY', (err) => {
+    fs.writeFile('./public/' + name + '.html', elementIndex, (err) => {
       if (err) throw err;
       console.log('This file has been saved')
-
-      
-
-
     })// end writeFile
 
   })// end on data
 
 }// end postHandler
-
-function generalIndexGenerator(name, symbol, atmoicNumber, description) {
-  
-
-
-}
-
-
-
-
-
-
-
-
 
 
 

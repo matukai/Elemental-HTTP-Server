@@ -27,6 +27,7 @@ const server = http.createServer((req, res) => {
 
 }) //end server
 
+
 function getRequestHandler(req, res) {
   let uri = req.url;
 
@@ -49,6 +50,7 @@ function getRequestHandler(req, res) {
   });
 } //end getRequestHandler
 
+// gets called when post
 function postHandler (req, res) {
   let name;
   let symbol;
@@ -56,39 +58,42 @@ function postHandler (req, res) {
   let description;
 
   req.on('data', function (data) {
-    let parseRequest = querystring.parse(data.toString());
-    console.log(parseRequest);
-    name = parseRequest.elementName;
-    symbol = parseRequest.elementSymbol;
-    atomicNumber = parseRequest.elementAtmoicNumber;
-    description = parseRequest.elementDescription;
-
-    let elementIndex =   `<!DOCTYPE html>
-    <html lang="en">
-    <head>
-      <meta charset="UTF-8">
-      <title>The Elements - ${name}</title>
-      <link rel="stylesheet" href="/css/styles.css">
-    </head>
-    <body>
-      <h1>${name}</h1>
-      <h2>${symbol}</h2>
-      <h3>${atomicNumber}</h3>
-      <p>${description}</p>
-      <p><a href="/">back</a></p>
-    </body>
-    </html>`
-
-    fs.writeFile('./public/' + name + '.html', elementIndex, (err) => {
-      if (err) throw err;
-      console.log('This file has been saved')
-    })// end writeFile
+    createElement(data, res);
 
   })// end on data
 
 }// end postHandler
 
 
+function createElement (data, res) {
+  let parseRequest = querystring.parse(data.toString());
+  let elementIndex =   `<!DOCTYPE html>
+  <html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <title>The Elements - ${parseRequest.elementName}</title>
+    <link rel="stylesheet" href="/css/styles.css">
+  </head>
+  <body>
+    <h1>${parseRequest.elementName}</h1>
+    <h2>${parseRequest.elementSymbol}</h2>
+    <h3>Atmoic number ${parseRequest.elementAtmoicNumber}</h3>
+    <p>${parseRequest.elementDescription}</p>
+    <p><a href="/">back</a></p>
+  </body>
+  </html>`
+
+  fs.writeFile('./public/' + parseRequest.elementName + '.html', elementIndex, (err) => {
+    if (err) throw err;
+
+    setPostHeader(res);
+    res.write(JSON.stringify({'success' : true}));
+    return res.end();
+
+  })// end writeFile
+
+
+}// end createElement
 
 
 server.listen(PORT, () => {
@@ -97,10 +102,16 @@ server.listen(PORT, () => {
 
 function setSuccessHeader(res) {
   res.setHeader('Content-Type', 'text/html');
+  res.writeHead('200', 'OK');
 };
 
 function setFailureHeader(res) {
-  //res.setHeader('Content-Type', 'text/html');
+  res.setHeader('Content-Type', 'text/html');
   res.writeHead('404', 'Not Found');
 };
+
+function setPostHeader(res){
+  res.setHeader('Content-Type', 'application/json');
+  res.writeHead('200', 'OK');
+}
 

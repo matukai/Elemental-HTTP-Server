@@ -28,28 +28,38 @@ const server = http.createServer((req, res) => {
 
 function getRequestHandler(req, res) {
   let uri = req.url;
+  console.log(uri)
 
-  fs.readFile('./public' + uri, {
-    encoding: 'utf8'
-  }, (err, data) => {
-    if (err) {
-      fs.readFile('./public/404.html', {
-        encoding: 'utf8'
-      }, (err, data) => {
-        if (err) {
-          res.write('500 server error file not found');
+  if (uri === '/') {
+    fs.readFile('./public/index.html', (err, data) => {
+      res.end(data);
+    })
+  } else {
+
+    fs.readFile('./public' + uri, {
+      encoding: 'utf8'
+    }, (err, data) => {
+      if (err) {
+        fs.readFile('./public/404.html', {
+          encoding: 'utf8'
+        }, (err, data) => {
+          if (err) {
+            res.write('500 server error file not found');
+            return res.end();
+          }
+          setFailureHeader(res);
+          res.write(data.toString());
           return res.end();
-        }
-        setFailureHeader(res);
+        })
+      } else {
+        setSuccessHeader(res);
         res.write(data.toString());
         return res.end();
-      })
-    } else {
-      setSuccessHeader(res);
-      res.write(data.toString());
-      return res.end();
-    }
-  });
+      }
+    }) // end fs.readFile
+
+  }
+
 } //end getRequestHandler
 
 
@@ -95,10 +105,7 @@ function createElement(data, res) {
     }, (err, files) => {
       //console.log(files)
       generateListOfElements(files);
-      fs.writeFile('./public/index.html', updateIndex, (err) => {
-        if (err) throw err;
-        console.log('iiiiiindex updated ');
-      }) // end fs.writeFile
+
 
     }) // end fs.readdir
 
@@ -131,23 +138,16 @@ function setPostHeader(res) {
 }
 
 function generateListOfElements(arrayOfFiles) {
-  arrayOfFiles.filter((element) => {
+
+  let indexList = arrayOfFiles.filter((element) => {
     return (element.endsWith('.html') && element !== '404.html' && element !== 'index.html')
   }).map((element) => {
-    //console.log(element)
-    let listOfElements =
-      `<li>
-        <a href="/${element}">${element.split('.')[0]}</a>
-      </li>`
-      //console.log(listOfElements);
-      updateIndex(listOfElements);
+    return `<li><a href="/${element}">${element.split('.')[0]}</a></li>`;
+  }).join('');
 
-  })
-}
-
-function updateIndex (listOfElements) {
-    let updateIndex = `<!DOCTYPE html>
-  <html lang="en">
+  let updateIndex = 
+`<!DOCTYPE html>
+<html lang="en">
   <head>
     <meta charset="UTF-8">
     <title>The Elements</title>
@@ -158,10 +158,21 @@ function updateIndex (listOfElements) {
     <h2>These are all the known elements.</h2>
     <h3>These are 2</h3>
     <ol>
-    ${listOfElements}
+    ${indexList}
     </ol>
   </body>
-  </html>`
+</html>`;
+
+  fs.writeFile('./public/index.html', updateIndex, (err) => {
+    if (err) throw err;
+    console.log('iiiiiindex updated ');
+  }) // end fs.writeFile
+
+}
+
+function updateIndex(listOfElements) {
+
+
 
 
 }

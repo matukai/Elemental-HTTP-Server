@@ -23,17 +23,19 @@ const server = http.createServer((req, res) => {
       response.end();
       break;
   }
-
-
 }) //end server
 
 
 function getRequestHandler(req, res) {
   let uri = req.url;
 
-  fs.readFile('./public' + uri, {encoding: 'utf8'}, (err, data) => {
+  fs.readFile('./public' + uri, {
+    encoding: 'utf8'
+  }, (err, data) => {
     if (err) {
-      fs.readFile('./public/404.html', {encoding: 'utf8'}, (err, data) => {
+      fs.readFile('./public/404.html', {
+        encoding: 'utf8'
+      }, (err, data) => {
         if (err) {
           res.write('500 server error file not found');
           return res.end();
@@ -42,7 +44,7 @@ function getRequestHandler(req, res) {
         res.write(data.toString());
         return res.end();
       })
-    }else{
+    } else {
       setSuccessHeader(res);
       res.write(data.toString());
       return res.end();
@@ -50,24 +52,20 @@ function getRequestHandler(req, res) {
   });
 } //end getRequestHandler
 
-// gets called when post
-function postHandler (req, res) {
-  let name;
-  let symbol;
-  let atmoicNumber;
-  let description;
+
+function postHandler(req, res) {
 
   req.on('data', function (data) {
     createElement(data, res);
 
-  })// end on data
+  }) // end on data
 
-}// end postHandler
+} // end postHandler
 
 
-function createElement (data, res) {
+function createElement(data, res) {
   let parseRequest = querystring.parse(data.toString());
-  let elementIndex =   `<!DOCTYPE html>
+  let elementIndex = `<!DOCTYPE html>
   <html lang="en">
   <head>
     <meta charset="UTF-8">
@@ -83,17 +81,34 @@ function createElement (data, res) {
   </body>
   </html>`
 
+
   fs.writeFile('./public/' + parseRequest.elementName + '.html', elementIndex, (err) => {
     if (err) throw err;
-
     setPostHeader(res);
-    res.write(JSON.stringify({'success' : true}));
+    res.write(JSON.stringify({
+      'success': true
+    }));
+    console.log('The file has been saved');
+
+    fs.readdir('./public', {
+      encoding: 'utf8'
+    }, (err, files) => {
+      //console.log(files)
+      generateListOfElements(files);
+      fs.writeFile('./public/index.html', updateIndex, (err) => {
+        if (err) throw err;
+        console.log('iiiiiindex updated ');
+      }) // end fs.writeFile
+
+    }) // end fs.readdir
+
+
+
     return res.end();
+  }) // end writeFile
 
-  })// end writeFile
 
-
-}// end createElement
+} // end createElement
 
 
 server.listen(PORT, () => {
@@ -101,17 +116,52 @@ server.listen(PORT, () => {
 });
 
 function setSuccessHeader(res) {
-  res.setHeader('Content-Type', 'text/html');
+  //res.setHeader('Content-Type', 'text/html');
   res.writeHead('200', 'OK');
 };
 
 function setFailureHeader(res) {
-  res.setHeader('Content-Type', 'text/html');
+  //res.setHeader('Content-Type', 'text/html');
   res.writeHead('404', 'Not Found');
 };
 
-function setPostHeader(res){
+function setPostHeader(res) {
   res.setHeader('Content-Type', 'application/json');
   res.writeHead('200', 'OK');
 }
 
+function generateListOfElements(arrayOfFiles) {
+  arrayOfFiles.filter((element) => {
+    return (element.endsWith('.html') && element !== '404.html' && element !== 'index.html')
+  }).map((element) => {
+    //console.log(element)
+    let listOfElements =
+      `<li>
+        <a href="/${element}">${element.split('.')[0]}</a>
+      </li>`
+      //console.log(listOfElements);
+      updateIndex(listOfElements);
+
+  })
+}
+
+function updateIndex (listOfElements) {
+    let updateIndex = `<!DOCTYPE html>
+  <html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <title>The Elements</title>
+    <link rel="stylesheet" href="/css/styles.css">
+  </head>
+  <body>
+    <h1>The Elements</h1>
+    <h2>These are all the known elements.</h2>
+    <h3>These are 2</h3>
+    <ol>
+    ${listOfElements}
+    </ol>
+  </body>
+  </html>`
+
+
+}
